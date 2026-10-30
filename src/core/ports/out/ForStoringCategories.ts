@@ -1,7 +1,7 @@
-import type { Category } from '../domain/category'
+import type { Category } from '../../domain/category'
 
 /** What the core needs from wherever categories are kept. */
-export interface CategoryStore {
+export interface ForStoringCategories {
   list(): Promise<Category[]>
   get(id: string): Promise<Category | null>
   save(category: Category): Promise<void> // create or update
