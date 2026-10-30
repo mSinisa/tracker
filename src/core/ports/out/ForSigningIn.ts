@@ -4,7 +4,7 @@ export interface User {
 }
 
 /** Sign-in, kept behind a port so the core never imports Firebase. */
-export interface Auth {
+export interface ForSigningIn {
   currentUser(): User | null
   signIn(): Promise<User>
   signOut(): Promise<void>

@@ -1,4 +1,4 @@
-export type { CategoryStore } from './CategoryStore'
-export type { EntryStore } from './EntryStore'
-export type { Clock } from './Clock'
-export type { Auth, User } from './Auth'
+// Driving ports: what the app offers (implemented by the services).
+export type * from './in'
+// Driven ports: what the app needs (implemented by the adapters).
+export type * from './out'
