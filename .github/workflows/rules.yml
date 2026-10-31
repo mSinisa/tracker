@@ -1,0 +1,33 @@
+name: Firestore rules
+
+# Runs the security rules tests against the Firestore emulator.
+# Uses the demo-tracker project, so it never touches the real Firebase project and needs no login.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4 # the Firestore emulator needs Java 21+
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4 # keep the downloaded emulator between runs
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run test:rules
