@@ -6,5 +6,16 @@
   },
   "categories": {
     "correctness": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["tests/rules/**"],
+      "rules": {
+        "vitest/expect-expect": [
+          "error",
+          { "assertFunctionNames": ["expect", "assertFails", "assertSucceeds"] }
+        ]
+      }
+    }
+  ]
 }
