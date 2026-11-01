@@ -40,7 +40,7 @@ function mountApp(auth: FakeAuth, makeServices: (uid: string) => Services = serv
   return mount(App, {
     global: {
       plugins: [{ install: (app) => provideSession(app, session) }],
-      stubs: { RouterView: { template: '<p>the app</p>' } },
+      stubs: { RouterView: { template: '<p>the app</p>' }, TabBar: true },
     },
   })
 }
