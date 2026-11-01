@@ -9,6 +9,7 @@ import DayPanel from './calendar/DayPanel.vue'
 import MonthGrid from './calendar/MonthGrid.vue'
 import { addMonths, dayLabel, monthLabel } from './calendar/months'
 import { monthSummary } from './calendar/summary'
+import { colourHex } from './settings/present'
 
 const { services } = useSession()
 
@@ -29,6 +30,8 @@ const summary = computed(() =>
   view.value ? monthSummary(view.value, categories.value, thisWeek.value) : [],
 )
 const isCurrentMonth = computed(() => month.value === thisMonth)
+const colourOf = (categoryId: string) =>
+  colourHex(categories.value.find((c) => c.id === categoryId)?.color ?? '')
 
 /** This week's progress, the same numbers as on Today. Only shown on the current month. */
 async function loadThisWeek() {
@@ -110,6 +113,11 @@ onMounted(load)
 
     <ul class="summary">
       <li v-for="line in summary" :key="line.categoryId">
+        <span
+          class="key"
+          :style="{ background: colourOf(line.categoryId) }"
+          aria-hidden="true"
+        ></span>
         <strong>{{ line.text }}</strong> {{ line.name }}
       </li>
     </ul>
@@ -122,6 +130,7 @@ onMounted(load)
       :month="month"
       :today="today"
       :done="view?.days ?? {}"
+      :categories="categories"
       :class="{ loading }"
       @select="selected = $event"
     />
@@ -181,6 +190,15 @@ h1 {
   padding: 0;
   list-style: none;
   text-align: center;
+}
+
+.key {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  vertical-align: middle;
 }
 
 .error {

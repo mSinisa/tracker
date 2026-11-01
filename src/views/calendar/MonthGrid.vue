@@ -1,19 +1,39 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Category } from '@/core/domain/category'
 import type { Day } from '@/core/domain/day'
+import { colourHex } from '@/views/settings/present'
 import { dayNumber, monthGrid } from './months'
 
-const props = defineProps<{
-  month: Day // any day in the month to show
-  today: Day
-  done: Record<string, string[]> // date -> categories checked in that day
-}>()
+const props = withDefaults(
+  defineProps<{
+    month: Day // any day in the month to show
+    today: Day
+    done: Record<string, string[]> // date -> categories checked in that day
+    categories?: Category[] // for each dot's colour and name, in list order
+  }>(),
+  { categories: () => [] },
+)
 const emit = defineEmits<{ select: [day: Day] }>()
 
 const weeks = computed(() => monthGrid(props.month))
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 const isDone = (day: Day) => (props.done[day]?.length ?? 0) > 0
+
+/** At most this many dots fit under a day; the rest become a "+". */
+const MAX_DOTS = 3
+
+/** The categories checked in on a day, in the same order as everywhere else. */
+function doneOn(day: Day): Category[] {
+  const ids = props.done[day] ?? []
+  return props.categories.filter((c) => ids.includes(c.id))
+}
+
+/** "2026-10-29, Office days, Workout": what VoiceOver reads for a day. */
+function labelFor(day: Day): string {
+  return [day, ...doneOn(day).map((c) => c.name)].join(', ')
+}
 </script>
 
 <template>
@@ -32,11 +52,20 @@ const isDone = (day: Day) => (props.done[day]?.length ?? 0) > 0
             class="day"
             :class="{ done: isDone(day), today: day === today }"
             :disabled="day > today"
-            :aria-label="`${day}${isDone(day) ? ', checked in' : ''}`"
+            :aria-label="labelFor(day)"
             :aria-pressed="isDone(day)"
             @click="emit('select', day)"
           >
-            {{ dayNumber(day) }}
+            <span class="number">{{ dayNumber(day) }}</span>
+            <span class="dots" aria-hidden="true">
+              <span
+                v-for="category in doneOn(day).slice(0, MAX_DOTS)"
+                :key="category.id"
+                class="dot"
+                :style="{ background: colourHex(category.color) }"
+              ></span>
+              <span v-if="doneOn(day).length > MAX_DOTS" class="more">+</span>
+            </span>
           </button>
         </td>
       </tr>
@@ -64,21 +93,44 @@ td {
 }
 
 .day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   width: 40px;
-  height: 40px;
+  height: 44px;
+  margin: 0 auto;
+  padding: 0;
   border: 1px solid transparent;
-  border-radius: 50%;
+  border-radius: 10px;
   background: none;
   color: var(--color-text);
   font-size: 0.95rem;
   cursor: pointer;
 }
 
-.day.done {
-  border-color: #2f6fdb;
-  background: #dbe8fc;
-  color: #1b3f80;
+.day.done .number {
   font-weight: 600;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 6px; /* the same height with or without dots, so numbers line up */
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.more {
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0.7;
 }
 
 .day.today {
