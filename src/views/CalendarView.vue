@@ -20,7 +20,7 @@ const categories = shallowRef<Category[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const selected = ref<Day | null>(null) // the day whose panel is open
-const busy = ref(false)
+const savingId = ref<string | null>(null) // category being saved from the panel
 const saved = ref(false)
 
 const summary = computed(() => (view.value ? monthSummary(view.value, categories.value) : []))
@@ -49,20 +49,27 @@ function go(months: number) {
   void load()
 }
 
-/** Adds or removes the selected day for one category, then shows the month as saved. */
+/**
+ * Adds or removes the selected day for one category. After saving, the month is updated
+ * here instead of reloaded, which saves two trips to Firestore.
+ */
 async function toggle(categoryId: string) {
-  if (!services.value || !selected.value) return
-  busy.value = true
+  const day = selected.value
+  if (!services.value || !day || !view.value) return
+  savingId.value = categoryId
   try {
-    await services.value.checkIn.toggleDay(categoryId, selected.value)
+    const added = await services.value.checkIn.toggleDay(categoryId, day)
+    const ids = (view.value.days[day] ?? []).filter((id) => id !== categoryId)
+    const days = { ...view.value.days, [day]: added ? [...ids, categoryId] : ids }
+    if (!added && ids.length === 0) delete days[day]
+    view.value = { ...view.value, days }
     selected.value = null
-    await load()
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
   } catch {
     error.value = 'That didn’t save. Please try again.'
   } finally {
-    busy.value = false
+    savingId.value = null
   }
 }
 
@@ -112,7 +119,7 @@ onMounted(load)
       :label="dayLabel(selected)"
       :categories="categories"
       :done-ids="view?.days[selected] ?? []"
-      :busy="busy"
+      :saving-id="savingId"
       @toggle="toggle"
       @close="selected = null"
     />
