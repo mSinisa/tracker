@@ -7,7 +7,8 @@ import type { Services } from '@/compositionRoot'
 import { parseDay } from '@/core/domain/day'
 import type { ForSigningIn, User } from '@/core/ports/out'
 import { BackupService } from '@/core/services/BackupService'
-import { CategoryService, DEFAULT_CATEGORY } from '@/core/services/CategoryService'
+import { CategoryService } from '@/core/services/CategoryService'
+import { office } from '@/core/services/__tests__/fixtures'
 import { CheckInService } from '@/core/services/CheckInService'
 import { ProgressService } from '@/core/services/ProgressService'
 import { createSession, provideSession } from '@/session'
@@ -24,7 +25,7 @@ const signedIn: ForSigningIn = {
 }
 
 function inMemory(): Services {
-  const categories = new InMemoryCategoryStore([DEFAULT_CATEGORY])
+  const categories = new InMemoryCategoryStore([office])
   const entries = new InMemoryEntryStore(
     ['2026-09-30', '2026-10-02', '2026-10-07', '2026-10-29'].map((d) => ({
       categoryId: 'office-days',
@@ -130,7 +131,7 @@ describe('CalendarView', () => {
         color: 'green',
         goal: { type: 'perWeek' as const, target: 3 },
       }
-      const categories = new InMemoryCategoryStore([DEFAULT_CATEGORY, workout])
+      const categories = new InMemoryCategoryStore([office, workout])
       const entries = new InMemoryEntryStore([
         { categoryId: 'workout', date: parseDay('2026-10-31'), source: 'calendar' },
       ])

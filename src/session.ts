@@ -23,7 +23,9 @@ export function createSession(auth: ForSigningIn, makeServices: (uid: string) =>
     ready.value = false // show "Loading…" while the user's data is prepared
     try {
       const forUser = makeServices(signedIn.uid)
-      await forUser.categories.ensureDefaultCategory() // first sign-in: create Office days
+      // Reading the categories checks that this account may use the app (the rules say so).
+      // A new user simply has none yet and adds their own in Settings.
+      await forUser.categories.listCategories()
       user.value = signedIn
       services.value = forUser
     } catch (e) {

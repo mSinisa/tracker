@@ -38,6 +38,10 @@ function edit(category: Category) {
 /** Quick picks for new categories; anything else via Custom. */
 const PRESETS: { label: string; value: NewCategory }[] = [
   {
+    label: 'Office days · 8 per month',
+    value: { name: 'Office days', color: 'blue', goal: { type: 'perMonth', target: 8 } },
+  },
+  {
     label: 'Workout · 3 per week',
     value: { name: 'Workout', color: 'green', goal: { type: 'perWeek', target: 3 } },
   },

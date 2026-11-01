@@ -31,9 +31,9 @@ class FakeAuth implements ForSigningIn {
   }
 }
 
-/** Just enough of the services for signing in: creating the default category. */
+/** Just enough of the services for signing in: reading the categories. */
 const services = (): Services =>
-  ({ categories: { ensureDefaultCategory: async () => [] } }) as unknown as Services
+  ({ categories: { listCategories: async () => [] } }) as unknown as Services
 
 function mountApp(auth: FakeAuth, makeServices: (uid: string) => Services = services) {
   const session = createSession(auth, makeServices)
@@ -65,7 +65,7 @@ describe('App', () => {
     const notAllowed = () =>
       ({
         categories: {
-          ensureDefaultCategory: async () => {
+          listCategories: async () => {
             throw new Error('Missing or insufficient permissions.')
           },
         },

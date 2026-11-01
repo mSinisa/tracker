@@ -63,7 +63,7 @@ describe('session', () => {
     expect(session.services.value).toBeNull()
   })
 
-  it('builds the services for the signed-in uid and creates Office days', async () => {
+  it('builds the services for the signed-in uid, with no categories yet', async () => {
     const services = inMemoryServices()
     const session = createSession(new FakeAuth(), services.make)
     await session.signIn()
@@ -71,7 +71,7 @@ describe('session', () => {
     expect(session.user.value).toEqual({ uid: 'me', name: 'Me' })
     expect(services.uids).toEqual(['me'])
     const cards = await session.services.value!.progress.getTodayOverview()
-    expect(cards.map((c) => c.category.name)).toEqual(['Office days'])
+    expect(cards).toEqual([])
   })
 
   it('drops the services on sign-out', async () => {

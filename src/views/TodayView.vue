@@ -71,6 +71,11 @@ onMounted(load)
       {{ error }} <button type="button" class="link" @click="load">Retry</button>
     </p>
 
+    <section v-else-if="cards.length === 0" class="empty">
+      <p>Nothing to track yet.</p>
+      <RouterLink to="/settings" class="start">Add your first category</RouterLink>
+    </section>
+
     <CategoryCard
       v-for="card in cards"
       :key="card.category.id"
@@ -101,6 +106,27 @@ onMounted(load)
 
 header {
   text-align: center;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.start {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: 22px;
+  background: #2f6fdb;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .label,

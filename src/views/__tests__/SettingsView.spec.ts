@@ -7,7 +7,8 @@ import type { Services } from '@/compositionRoot'
 import { parseDay } from '@/core/domain/day'
 import type { ForSigningIn, User } from '@/core/ports/out'
 import { BackupService } from '@/core/services/BackupService'
-import { CategoryService, DEFAULT_CATEGORY } from '@/core/services/CategoryService'
+import { CategoryService } from '@/core/services/CategoryService'
+import { office } from '@/core/services/__tests__/fixtures'
 import { CheckInService } from '@/core/services/CheckInService'
 import { ProgressService } from '@/core/services/ProgressService'
 import { createSession, provideSession } from '@/session'
@@ -24,7 +25,7 @@ const signedIn: ForSigningIn = {
 }
 
 function inMemory(): Services {
-  const categories = new InMemoryCategoryStore([DEFAULT_CATEGORY])
+  const categories = new InMemoryCategoryStore([office])
   const entries = new InMemoryEntryStore()
   const clock = new FixedClock(parseDay('2026-10-29'))
   return {
@@ -170,5 +171,14 @@ describe('SettingsView', () => {
       }
       expect(rows(wrapper)).toHaveLength(3)
     })
+  })
+
+  it('offers Office days, 8 per month, as a quick pick', async () => {
+    const wrapper = await mountSettings()
+    await wrapper.get('.row.add').trigger('click')
+    const chip = wrapper.findAll('.chip').find((c) => c.text().startsWith('Office days'))!
+    await chip.trigger('click')
+    expect((wrapper.get('input').element as HTMLInputElement).value).toBe('Office days')
+    expect(wrapper.get('output').text()).toBe('8')
   })
 })
