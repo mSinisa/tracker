@@ -2,14 +2,6 @@ import { createCategory, slugify, type Category } from '../domain/category'
 import type { ForManagingCategories, NewCategory } from '../ports/in'
 import type { ForStoringCategories, ForStoringEntries } from '../ports/out'
 
-/** The category every new user starts with. */
-export const DEFAULT_CATEGORY: Category = {
-  id: 'office-days',
-  name: 'Office days',
-  color: 'blue',
-  goal: { type: 'perMonth', target: 8 },
-}
-
 const MAX_ID_LENGTH = 40
 
 /** Implements the use cases behind the categories screen in Settings. */
@@ -18,13 +10,6 @@ export class CategoryService implements ForManagingCategories {
     private readonly categories: ForStoringCategories,
     private readonly entries: ForStoringEntries,
   ) {}
-
-  async ensureDefaultCategory(): Promise<Category[]> {
-    const existing = await this.categories.list()
-    if (existing.length > 0) return existing
-    await this.categories.save(DEFAULT_CATEGORY)
-    return [DEFAULT_CATEGORY]
-  }
 
   listCategories(): Promise<Category[]> {
     return this.categories.list()

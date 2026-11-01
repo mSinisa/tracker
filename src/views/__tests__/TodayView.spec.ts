@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import { FixedClock } from '@/adapters/clock/FixedClock'
 import { InMemoryCategoryStore } from '@/adapters/storage/InMemoryCategoryStore'
 import { InMemoryEntryStore } from '@/adapters/storage/InMemoryEntryStore'
@@ -7,7 +7,8 @@ import type { Services } from '@/compositionRoot'
 import { parseDay } from '@/core/domain/day'
 import type { ForSigningIn, User } from '@/core/ports/out'
 import { BackupService } from '@/core/services/BackupService'
-import { CategoryService, DEFAULT_CATEGORY } from '@/core/services/CategoryService'
+import { CategoryService } from '@/core/services/CategoryService'
+import { office } from '@/core/services/__tests__/fixtures'
 import { CheckInService } from '@/core/services/CheckInService'
 import { ProgressService } from '@/core/services/ProgressService'
 import { createSession, provideSession } from '@/session'
@@ -26,7 +27,7 @@ const signedIn: ForSigningIn = {
 
 /** The real services on in-memory adapters, with "today" frozen on 29 October 2026. */
 function inMemory(): Services {
-  const categories = new InMemoryCategoryStore([DEFAULT_CATEGORY])
+  const categories = new InMemoryCategoryStore([office])
   const entries = new InMemoryEntryStore(
     ['2026-10-02', '2026-10-07', '2026-10-13', '2026-10-16', '2026-10-22'].map((d) => ({
       categoryId: 'office-days',
@@ -47,7 +48,10 @@ async function mountToday(makeServices: (uid: string) => Services = inMemory) {
   const session = createSession(signedIn, makeServices)
   await flushPromises()
   const wrapper = mount(TodayView, {
-    global: { plugins: [{ install: (app) => provideSession(app, session) }] },
+    global: {
+      plugins: [{ install: (app) => provideSession(app, session) }],
+      stubs: { RouterLink: RouterLinkStub },
+    },
   })
   await flushPromises()
   return wrapper
@@ -109,5 +113,22 @@ describe('TodayView', () => {
     expect(wrapper.text()).toContain('5 of 8')
     expect(wrapper.find('.check-in').exists()).toBe(true)
     expect(wrapper.text()).toContain('That didn’t save. Please try again.')
+  })
+
+  it('points a new user to Settings when there is nothing to track yet', async () => {
+    const empty = (): Services => {
+      const categories = new InMemoryCategoryStore()
+      const entries = new InMemoryEntryStore()
+      const clock = new FixedClock(parseDay('2026-10-29'))
+      return {
+        checkIn: new CheckInService(categories, entries, clock),
+        progress: new ProgressService(categories, entries, clock),
+        categories: new CategoryService(categories, entries),
+        backup: new BackupService(categories, entries, clock),
+      }
+    }
+    const wrapper = await mountToday(empty)
+    expect(wrapper.text()).toContain('Nothing to track yet.')
+    expect(wrapper.getComponent(RouterLinkStub).props('to')).toBe('/settings')
   })
 })

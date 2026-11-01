@@ -9,8 +9,6 @@ export interface NewCategory {
 
 /** What the app offers for managing categories. Called by the Settings screen. */
 export interface ForManagingCategories {
-  /** On first use there are no categories yet: creates Office days, 8 per month. */
-  ensureDefaultCategory(): Promise<Category[]>
   listCategories(): Promise<Category[]>
   addCategory(input: NewCategory): Promise<Category>
   /** Renames, recolours or changes the goal. The id never changes, so entries stay linked. */

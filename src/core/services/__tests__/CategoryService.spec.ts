@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CategoryService, DEFAULT_CATEGORY } from '../CategoryService'
+import { CategoryService } from '../CategoryService'
 import { entry, office, reading, setup, workout } from './fixtures'
 
 /** Builds the service on top of fresh in-memory adapters. */
@@ -8,20 +8,6 @@ function make(...args: Parameters<typeof setup>) {
   const service = new CategoryService(adapters.categories, adapters.entries)
   return { ...adapters, service }
 }
-
-describe('CategoryService.ensureDefaultCategory', () => {
-  it('creates Office days, 8 per month, on first use', async () => {
-    const { service, categories } = make([])
-    expect(await service.ensureDefaultCategory()).toEqual([DEFAULT_CATEGORY])
-    expect(await categories.get('office-days')).toEqual(DEFAULT_CATEGORY)
-  })
-
-  it('leaves existing categories alone', async () => {
-    const { service, categories } = make([workout])
-    expect(await service.ensureDefaultCategory()).toEqual([workout])
-    expect(await categories.get('office-days')).toBeNull()
-  })
-})
 
 describe('CategoryService.addCategory', () => {
   it('makes the id from the name', async () => {
