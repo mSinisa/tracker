@@ -9,7 +9,7 @@
   },
   "overrides": [
     {
-      "files": ["tests/rules/**"],
+      "files": ["tests/**"],
       "rules": {
         "vitest/expect-expect": [
           "error",

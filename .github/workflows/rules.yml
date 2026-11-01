@@ -1,6 +1,6 @@
-name: Firestore rules
+name: Firestore emulator tests
 
-# Runs the security rules tests against the Firestore emulator.
+# Runs the security rules tests and the Firestore adapter tests against the Firestore emulator.
 # Uses the demo-tracker project, so it never touches the real Firebase project and needs no login.
 on:
   pull_request:
@@ -30,4 +30,4 @@ jobs:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - run: npm run test:rules
+      - run: npm run test:emulator
