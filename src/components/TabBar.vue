@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 
-// The app's main sections. Settings joins in Phase 6.
+// The app's main sections.
 const tabs = [
   { to: '/', label: 'Today' },
   { to: '/calendar', label: 'Calendar' },
+  { to: '/settings', label: 'Settings' },
 ]
 </script>
 

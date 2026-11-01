@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, shallowRef } from 'vue'
 import type { Category } from '@/core/domain/category'
+import type { Progress } from '@/core/domain/progress'
 import { dayOf, startOfMonth, type Day } from '@/core/domain/day'
 import type { MonthView } from '@/core/ports/in'
 import { useSession } from '@/session'
@@ -22,9 +23,22 @@ const error = ref<string | null>(null)
 const selected = ref<Day | null>(null) // the day whose panel is open
 const savingId = ref<string | null>(null) // category being saved from the panel
 const saved = ref(false)
+const thisWeek = shallowRef<Record<string, Progress>>({}) // weekly progress, current month only
 
-const summary = computed(() => (view.value ? monthSummary(view.value, categories.value) : []))
+const summary = computed(() =>
+  view.value ? monthSummary(view.value, categories.value, thisWeek.value) : [],
+)
 const isCurrentMonth = computed(() => month.value === thisMonth)
+
+/** This week's progress, the same numbers as on Today. Only shown on the current month. */
+async function loadThisWeek() {
+  if (!services.value || !isCurrentMonth.value) {
+    thisWeek.value = {}
+    return
+  }
+  const overview = await services.value.progress.getTodayOverview()
+  thisWeek.value = Object.fromEntries(overview.map((o) => [o.category.id, o.progress]))
+}
 
 async function load() {
   if (!services.value) return
@@ -33,6 +47,7 @@ async function load() {
     const [monthView, list] = await Promise.all([
       services.value.progress.getMonth(month.value),
       services.value.categories.listCategories(),
+      loadThisWeek(),
     ])
     view.value = monthView
     categories.value = list
@@ -63,6 +78,7 @@ async function toggle(categoryId: string) {
     const days = { ...view.value.days, [day]: added ? [...ids, categoryId] : ids }
     if (!added && ids.length === 0) delete days[day]
     view.value = { ...view.value, days }
+    await loadThisWeek() // the day may be in this week, possibly last month's part of it
     selected.value = null
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)

@@ -9,6 +9,7 @@ async function mountAt(path: string) {
     routes: [
       { path: '/', component: { template: '<p>today</p>' } },
       { path: '/calendar', component: { template: '<p>calendar</p>' } },
+      { path: '/settings', component: { template: '<p>settings</p>' } },
     ],
   })
   await router.push(path)
@@ -18,9 +19,9 @@ async function mountAt(path: string) {
 }
 
 describe('TabBar', () => {
-  it('shows the Today and Calendar tabs', async () => {
+  it('shows the Today, Calendar and Settings tabs', async () => {
     const { wrapper } = await mountAt('/')
-    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Today', 'Calendar'])
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Today', 'Calendar', 'Settings'])
   })
 
   it('marks the tab of the current page', async () => {
