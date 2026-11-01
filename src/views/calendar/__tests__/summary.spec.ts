@@ -37,4 +37,14 @@ describe('monthSummary', () => {
     const one = { ...view, days: { '2026-10-09': ['workout'] } }
     expect(monthSummary(one, [office, workout]).map((l) => l.text)).toEqual(['0 of 8', '1 day'])
   })
+
+  it('shows this week for a weekly goal when it is given, even across months', () => {
+    // Sun 1 Nov: Sat 31 Oct and today both belong to the week that started Mon 26 Oct.
+    const november = { month: parseDay('2026-11-01'), days: { '2026-11-01': ['workout'] } }
+    const thisWeek = { workout: { done: 2, target: 3, left: 1, reached: false } }
+    expect(monthSummary(november, [office, workout], thisWeek).map((l) => l.text)).toEqual([
+      '0 of 8',
+      '2 of 3 this week',
+    ])
+  })
 })

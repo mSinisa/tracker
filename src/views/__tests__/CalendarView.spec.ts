@@ -118,4 +118,62 @@ describe('CalendarView', () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(day(wrapper, '2026-10-21').classes()).not.toContain('done')
   })
+
+  describe('a week that starts in the previous month', () => {
+    // Sunday 1 November: the week began on Monday 26 October.
+    beforeEach(() => vi.setSystemTime(new Date(2026, 10, 1, 21, 0)))
+
+    function withWorkout(): Services {
+      const workout = {
+        id: 'workout',
+        name: 'Workout',
+        color: 'green',
+        goal: { type: 'perWeek' as const, target: 3 },
+      }
+      const categories = new InMemoryCategoryStore([DEFAULT_CATEGORY, workout])
+      const entries = new InMemoryEntryStore([
+        { categoryId: 'workout', date: parseDay('2026-10-31'), source: 'calendar' },
+      ])
+      const clock = new FixedClock(parseDay('2026-11-01'))
+      return {
+        checkIn: new CheckInService(categories, entries, clock),
+        progress: new ProgressService(categories, entries, clock),
+        categories: new CategoryService(categories, entries),
+        backup: new BackupService(categories, entries, clock),
+      }
+    }
+
+    async function mountNovember() {
+      const session = createSession(signedIn, withWorkout)
+      await flushPromises()
+      const wrapper = mount(CalendarView, {
+        global: { plugins: [{ install: (app) => provideSession(app, session) }] },
+      })
+      await flushPromises()
+      return wrapper
+    }
+
+    it('counts Saturday 31 October in this week', async () => {
+      const wrapper = await mountNovember()
+      expect(wrapper.get('h1').text()).toBe('November 2026')
+      expect(wrapper.text()).toContain('1 of 3 this week Workout')
+    })
+
+    it('updates this week after checking in today from the calendar', async () => {
+      const wrapper = await mountNovember()
+      await day(wrapper, '2026-11-01').trigger('click')
+      const row = wrapper.findAll('[role="dialog"] li').find((li) => li.text().includes('Workout'))!
+      await row.get('.add').trigger('click')
+      await flushPromises()
+      expect(wrapper.text()).toContain('2 of 3 this week Workout')
+    })
+
+    it('shows a plain day count for a past month', async () => {
+      const wrapper = await mountNovember()
+      await wrapper.get('[aria-label="Previous month"]').trigger('click')
+      await flushPromises()
+      expect(wrapper.text()).toContain('1 day Workout')
+      expect(wrapper.text()).not.toContain('this week')
+    })
+  })
 })
