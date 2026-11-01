@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CategoryOverview } from '@/core/ports/in'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import { describeCard } from './describe'
 
-const props = defineProps<{ overview: CategoryOverview; busy: boolean }>()
+const props = defineProps<{ overview: CategoryOverview; saving: boolean }>()
 const emit = defineEmits<{ checkIn: []; undo: [] }>()
 
 const text = computed(() => describeCard(props.overview))
@@ -19,17 +20,18 @@ const text = computed(() => describeCard(props.overview))
       v-if="!overview.checkedInToday"
       type="button"
       class="check-in"
-      :disabled="busy"
+      :disabled="saving"
       @click="emit('checkIn')"
     >
       Check in
     </button>
     <template v-else>
       <p class="checked-in">Checked in ✓</p>
-      <button type="button" class="undo" :disabled="busy" @click="emit('undo')">Undo</button>
+      <button type="button" class="undo" :disabled="saving" @click="emit('undo')">Undo</button>
     </template>
 
-    <p class="status">{{ text.status }}</p>
+    <p v-if="saving" class="status saving" role="status"><LoadingSpinner /> Saving…</p>
+    <p v-else class="status">{{ text.status }}</p>
   </section>
 </template>
 
@@ -86,6 +88,12 @@ h2 {
   border: 2px solid #2e8540;
   background: #e5f4e4;
   color: #1d5a29;
+}
+
+.saving {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .undo {

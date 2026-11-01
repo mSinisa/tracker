@@ -43,8 +43,8 @@ function inMemory(): Services {
   }
 }
 
-async function mountToday() {
-  const session = createSession(signedIn, inMemory)
+async function mountToday(makeServices: (uid: string) => Services = inMemory) {
+  const session = createSession(signedIn, makeServices)
   await flushPromises()
   const wrapper = mount(TodayView, {
     global: { plugins: [{ install: (app) => provideSession(app, session) }] },
@@ -80,5 +80,34 @@ describe('TodayView', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('5 of 8')
     expect(wrapper.find('.check-in').exists()).toBe(true)
+  })
+
+  it('shows Checked in straight away, with a loader until it is saved', async () => {
+    const wrapper = await mountToday()
+    await wrapper.get('.check-in').trigger('click')
+    // Before the save has finished:
+    expect(wrapper.text()).toContain('Checked in ✓')
+    expect(wrapper.text()).toContain('6 of 8')
+    expect(wrapper.text()).toContain('Saving…')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Saving…')
+    expect(wrapper.text()).toContain('2 left this month')
+  })
+
+  it('puts the card back and explains when saving fails', async () => {
+    const failing = (uid: string) => {
+      const services = inMemory()
+      void uid
+      services.checkIn.checkInToday = async () => {
+        throw new Error('offline')
+      }
+      return services
+    }
+    const wrapper = await mountToday(failing)
+    await wrapper.get('.check-in').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('5 of 8')
+    expect(wrapper.find('.check-in').exists()).toBe(true)
+    expect(wrapper.text()).toContain('That didn’t save. Please try again.')
   })
 })

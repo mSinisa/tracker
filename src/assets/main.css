@@ -10,3 +10,15 @@
 button {
   font-family: inherit;
 }
+
+/* No rubber-band bounce: a page that fits the screen stays still, like a native app. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Taps respond straight away, without the double-tap-to-zoom delay. */
+button,
+a {
+  touch-action: manipulation;
+}

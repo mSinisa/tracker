@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { Category } from '@/core/domain/category'
 import type { Day } from '@/core/domain/day'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 defineProps<{
   day: Day
   label: string // "Wed 21 October"
   categories: Category[]
   doneIds: string[] // categories already checked in that day
-  busy: boolean
+  savingId: string | null // the category being saved, if any
 }>()
 const emit = defineEmits<{ toggle: [categoryId: string]; close: [] }>()
 </script>
@@ -25,10 +26,11 @@ const emit = defineEmits<{ toggle: [categoryId: string]; close: [] }>()
           <button
             type="button"
             :class="doneIds.includes(category.id) ? 'remove' : 'add'"
-            :disabled="busy"
+            :disabled="savingId !== null"
             @click="emit('toggle', category.id)"
           >
-            {{ doneIds.includes(category.id) ? 'Remove' : 'Add' }}
+            <template v-if="savingId === category.id"><LoadingSpinner /> Saving…</template>
+            <template v-else>{{ doneIds.includes(category.id) ? 'Remove' : 'Add' }}</template>
           </button>
         </li>
       </ul>

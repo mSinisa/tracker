@@ -4,12 +4,13 @@ import type { CategoryOverview } from '@/core/ports/in'
 import { useSession } from '@/session'
 import CategoryCard from './today/CategoryCard.vue'
 import { formatToday } from './today/describe'
+import { withCheckIn } from './today/optimistic'
 
 const { services, user, signOut } = useSession()
 
 const cards = shallowRef<CategoryOverview[]>([])
 const loading = ref(true)
-const busy = ref(false)
+const saving = ref<string | null>(null) // id of the category being saved
 const error = ref<string | null>(null)
 const saved = ref(false)
 const today = formatToday(new Date())
@@ -26,27 +27,34 @@ async function load() {
   }
 }
 
-/** Runs a change, then reloads the cards so the counts are always what was really saved. */
-async function change(action: () => Promise<unknown>, showSaved: boolean) {
-  busy.value = true
+function replaceCard(categoryId: string, change: (card: CategoryOverview) => CategoryOverview) {
+  cards.value = cards.value.map((c) => (c.category.id === categoryId ? change(c) : c))
+}
+
+/**
+ * Shows the new state straight away, then saves it. One trip to Firestore instead of three.
+ * If the save fails, the card goes back to how it was.
+ */
+async function setCheckedIn(categoryId: string, checkedIn: boolean) {
+  if (!services.value || saving.value) return
+  const before = cards.value
+  replaceCard(categoryId, (card) => withCheckIn(card, checkedIn))
+  saving.value = categoryId
+  error.value = null
   try {
-    await action()
-    await load()
-    if (showSaved) {
+    if (checkedIn) await services.value.checkIn.checkInToday(categoryId)
+    else await services.value.checkIn.undoCheckIn(categoryId)
+    if (checkedIn) {
       saved.value = true
       setTimeout(() => (saved.value = false), 2000)
     }
   } catch {
+    cards.value = before
     error.value = 'That didn’t save. Please try again.'
   } finally {
-    busy.value = false
+    saving.value = null
   }
 }
-
-const checkIn = (categoryId: string) =>
-  change(() => services.value!.checkIn.checkInToday(categoryId), true)
-const undo = (categoryId: string) =>
-  change(() => services.value!.checkIn.undoCheckIn(categoryId), false)
 
 onMounted(load)
 </script>
@@ -67,9 +75,9 @@ onMounted(load)
       v-for="card in cards"
       :key="card.category.id"
       :overview="card"
-      :busy="busy"
-      @check-in="checkIn(card.category.id)"
-      @undo="undo(card.category.id)"
+      :saving="saving === card.category.id"
+      @check-in="setCheckedIn(card.category.id, true)"
+      @undo="setCheckedIn(card.category.id, false)"
     />
 
     <p class="saved" :class="{ visible: saved }" aria-live="polite">{{ saved ? 'Saved' : '' }}</p>
