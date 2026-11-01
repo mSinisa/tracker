@@ -8,7 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-tracker \"vitest run --config vitest.rules.config.ts\"",
+    "test:emulator": "firebase emulators:exec --only firestore --project demo-tracker \"vitest run --config vitest.rules.config.ts\"",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "run-s \"lint:*\"",
