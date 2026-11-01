@@ -10,6 +10,7 @@ import {
 // These tests run against the local Firestore emulator (npm run test:rules), never the real project.
 
 const OWNER = 'UBewZkSJljMq5acZykNuCjT2yZa2'
+const WIFE = 'dR3D6LbGSXex2DQG3weR6gD8tur1'
 const STRANGER = 'someone-else'
 
 const category = {
@@ -88,6 +89,43 @@ describe('the owner', () => {
   it('cannot write anywhere outside their own folder', async () => {
     await assertFails(owner().doc('settings/global').set({ theme: 'dark' }))
     await assertFails(owner().doc(`users/${OWNER}`).set({ name: 'me' }))
+  })
+})
+
+describe('the second user', () => {
+  const wife = () => signedIn(WIFE)
+
+  it('can create, read, update and delete her own categories and entries', async () => {
+    const category_ = wife().doc(categoryPath(WIFE))
+    await assertSucceeds(category_.set(category))
+    await assertSucceeds(category_.get())
+    await assertSucceeds(category_.set({ ...category, name: 'Office' }))
+    await assertSucceeds(category_.delete())
+    const entry_ = wife().doc(entryPath(WIFE))
+    await assertSucceeds(entry_.set(entry))
+    await assertSucceeds(wife().collection(`users/${WIFE}/entries`).get())
+    await assertSucceeds(entry_.delete())
+  })
+
+  it("cannot read or write the owner's data", async () => {
+    await seed(entryPath(OWNER), entry)
+    await assertFails(wife().doc(entryPath(OWNER)).get())
+    await assertFails(wife().collection(`users/${OWNER}/entries`).get())
+    await assertFails(wife().doc(entryPath(OWNER)).delete())
+    await assertFails(wife().doc(categoryPath(OWNER)).set(category))
+  })
+
+  it('the owner cannot read or write her data', async () => {
+    await seed(entryPath(WIFE), entry)
+    await assertFails(owner().doc(entryPath(WIFE)).get())
+    await assertFails(owner().collection(`users/${WIFE}/entries`).get())
+    await assertFails(owner().doc(entryPath(WIFE)).delete())
+    await assertFails(owner().doc(categoryPath(WIFE)).set(category))
+  })
+
+  it('her uid with a non-Google sign-in: refused', async () => {
+    await assertFails(signedIn(WIFE, 'password').doc(categoryPath(WIFE)).set(category))
+    await assertFails(signedIn(WIFE, 'password').doc(entryPath(WIFE)).get())
   })
 })
 

@@ -1,13 +1,15 @@
 rules_version = '2';
 
-// Only the owner, signed in with Google, may read or write. Everything else is denied.
+// Only the allowed users, signed in with Google, may read or write, each only in their own
+// folder (users/{uid}/...). Everything else is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function isOwner(userId) {
       return request.auth != null
         && request.auth.uid == userId
-        && userId == "UBewZkSJljMq5acZykNuCjT2yZa2"
+        && userId in ["UBewZkSJljMq5acZykNuCjT2yZa2",  // Sinisa
+                      "dR3D6LbGSXex2DQG3weR6gD8tur1"]  // wife
         && request.auth.token.firebase.sign_in_provider == "google.com";
     }
 
